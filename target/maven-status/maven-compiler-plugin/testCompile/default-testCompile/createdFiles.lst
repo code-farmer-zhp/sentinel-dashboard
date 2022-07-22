@@ -1,0 +1,11 @@
+com/alibaba/csp/sentinel/dashboard/util/VersionUtilsTest.class
+com/alibaba/csp/sentinel/dashboard/datasource/entity/JsonSerializeTest.class
+com/alibaba/csp/sentinel/dashboard/rule/apollo/ApolloConfig.class
+com/alibaba/csp/sentinel/dashboard/rule/apollo/ApolloConfigUtil.class
+com/alibaba/csp/sentinel/dashboard/config/NoAuthConfigurationTest.class
+com/alibaba/csp/sentinel/dashboard/config/DashboardConfigTest.class
+com/alibaba/csp/sentinel/dashboard/repository/metric/InMemoryMetricsRepositoryTest.class
+com/alibaba/csp/sentinel/dashboard/discovery/MachineInfoTest.class
+com/alibaba/csp/sentinel/dashboard/discovery/AppInfoTest.class
+com/alibaba/csp/sentinel/dashboard/datasource/entity/SentinelVersionTest.class
+com/alibaba/csp/sentinel/dashboard/client/SentinelApiClientTest.class

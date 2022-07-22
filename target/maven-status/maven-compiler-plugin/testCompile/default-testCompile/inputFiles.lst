@@ -1,0 +1,11 @@
+/Users/zhoupeng/Documents/sentinel-dashboard/src/test/java/com/alibaba/csp/sentinel/dashboard/discovery/AppInfoTest.java
+/Users/zhoupeng/Documents/sentinel-dashboard/src/test/java/com/alibaba/csp/sentinel/dashboard/rule/apollo/ApolloConfigUtil.java
+/Users/zhoupeng/Documents/sentinel-dashboard/src/test/java/com/alibaba/csp/sentinel/dashboard/config/DashboardConfigTest.java
+/Users/zhoupeng/Documents/sentinel-dashboard/src/test/java/com/alibaba/csp/sentinel/dashboard/datasource/entity/SentinelVersionTest.java
+/Users/zhoupeng/Documents/sentinel-dashboard/src/test/java/com/alibaba/csp/sentinel/dashboard/util/VersionUtilsTest.java
+/Users/zhoupeng/Documents/sentinel-dashboard/src/test/java/com/alibaba/csp/sentinel/dashboard/repository/metric/InMemoryMetricsRepositoryTest.java
+/Users/zhoupeng/Documents/sentinel-dashboard/src/test/java/com/alibaba/csp/sentinel/dashboard/discovery/MachineInfoTest.java
+/Users/zhoupeng/Documents/sentinel-dashboard/src/test/java/com/alibaba/csp/sentinel/dashboard/rule/apollo/ApolloConfig.java
+/Users/zhoupeng/Documents/sentinel-dashboard/src/test/java/com/alibaba/csp/sentinel/dashboard/datasource/entity/JsonSerializeTest.java
+/Users/zhoupeng/Documents/sentinel-dashboard/src/test/java/com/alibaba/csp/sentinel/dashboard/config/NoAuthConfigurationTest.java
+/Users/zhoupeng/Documents/sentinel-dashboard/src/test/java/com/alibaba/csp/sentinel/dashboard/client/SentinelApiClientTest.java
