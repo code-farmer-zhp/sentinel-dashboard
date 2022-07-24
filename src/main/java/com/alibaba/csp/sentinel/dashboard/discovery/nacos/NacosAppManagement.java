@@ -14,10 +14,12 @@ import org.springframework.stereotype.Component;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
+import cn.hutool.core.collection.CollUtil;
 import lombok.extern.slf4j.Slf4j;
 
 @Component
@@ -29,7 +31,8 @@ public class NacosAppManagement implements MachineDiscovery {
 
     @Override
     public List<String> getAppNames() {
-        return getServices();
+        Set<AppInfo> briefApps = getBriefApps();
+        return briefApps.stream().map(AppInfo::getApp).collect(Collectors.toList());
     }
 
     private List<String> getServices() {
@@ -50,7 +53,9 @@ public class NacosAppManagement implements MachineDiscovery {
         for (String service : services) {
             CompletableFuture<Boolean> supplyAsync = CompletableFuture.supplyAsync(() -> {
                 AppInfo detailApp = getDetailApp(service);
-                appInfos.add(detailApp);
+                if (detailApp != null) {
+                    appInfos.add(detailApp);
+                }
                 return true;
             });
             completableFutures.add(supplyAsync);
@@ -67,21 +72,27 @@ public class NacosAppManagement implements MachineDiscovery {
     public AppInfo getDetailApp(String app) {
         try {
             List<Instance> allInstances = namingService.getAllInstances(app);
-
             AppInfo appInfo = new AppInfo();
             appInfo.setApp(app);
             appInfo.setAppType(0);
-
             for (Instance instance : allInstances) {
-                MachineInfo machineInfo = new MachineInfo();
-                machineInfo.setPort(instance.getPort());
-                machineInfo.setApp(app);
-                machineInfo.setAppType(0);
-                machineInfo.setHostname(instance.getServiceName());
-                machineInfo.setIp(instance.getIp());
-                machineInfo.setHealthy(instance.isHealthy());
-                machineInfo.setDead(!instance.isEnabled());
-                appInfo.addMachine(machineInfo);
+                Map<String, String> metadata = instance.getMetadata();
+                if (metadata != null && metadata.get("sentinelVersion") != null) {
+                    MachineInfo machineInfo = new MachineInfo();
+                    machineInfo.setPort(instance.getPort());
+                    machineInfo.setApp(app);
+                    machineInfo.setAppType(0);
+                    machineInfo.setHostname(instance.getServiceName());
+                    machineInfo.setIp(instance.getIp());
+                    machineInfo.setHealthy(instance.isHealthy());
+                    machineInfo.setDead(!instance.isEnabled());
+                    machineInfo.setVersion(metadata.get("sentinelVersion"));
+                    machineInfo.setLastHeartbeat(Long.parseLong(metadata.getOrDefault("lastUpTime", "0")));
+                    appInfo.addMachine(machineInfo);
+                }
+            }
+            if (CollUtil.isEmpty(appInfo.getMachines())) {
+                return null;
             }
             return appInfo;
         } catch (NacosException e) {
