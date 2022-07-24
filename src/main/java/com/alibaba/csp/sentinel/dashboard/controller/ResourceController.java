@@ -42,7 +42,7 @@ public class ResourceController {
 
     private static Logger logger = LoggerFactory.getLogger(ResourceController.class);
 
-    //@Autowired
+    @Autowired
     private SentinelApiClient httpFetcher;
 
     /**

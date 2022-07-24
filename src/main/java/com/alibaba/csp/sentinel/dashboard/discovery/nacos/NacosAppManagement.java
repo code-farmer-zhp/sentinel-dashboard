@@ -80,7 +80,7 @@ public class NacosAppManagement implements MachineDiscovery {
                 machineInfo.setHostname(instance.getServiceName());
                 machineInfo.setIp(instance.getIp());
                 machineInfo.setHealthy(instance.isHealthy());
-                machineInfo.setDead(instance.isEnabled());
+                machineInfo.setDead(!instance.isEnabled());
                 appInfo.addMachine(machineInfo);
             }
             return appInfo;

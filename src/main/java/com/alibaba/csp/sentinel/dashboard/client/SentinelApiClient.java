@@ -97,8 +97,8 @@ public class SentinelApiClient {
     private static final String HTTP_HEADER_CONTENT_TYPE = "Content-Type";
     private static final String HTTP_HEADER_CONTENT_TYPE_URLENCODED = ContentType.create(URLEncodedUtils.CONTENT_TYPE).toString();
 
-    private static final String RESOURCE_URL_PATH = "jsonTree";
-    private static final String CLUSTER_NODE_PATH = "clusterNode";
+    private static final String RESOURCE_URL_PATH = "sentinel/jsonTree";
+    private static final String CLUSTER_NODE_PATH = "sentinel/clusterNode";
     private static final String GET_RULES_PATH = "getRules";
     private static final String SET_RULES_PATH = "setRules";
     private static final String GET_PARAM_RULE_PATH = "getParamFlowRules";
@@ -131,7 +131,7 @@ public class SentinelApiClient {
     private static final SentinelVersion version160 = new SentinelVersion(1, 6, 0);
     private static final SentinelVersion version171 = new SentinelVersion(1, 7, 1);
     
-    //@Autowired
+    @Autowired
     private MachineDiscovery appManagement;
 
     public SentinelApiClient() {
