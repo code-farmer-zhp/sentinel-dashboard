@@ -22,6 +22,8 @@ import com.alibaba.csp.sentinel.dashboard.datasource.entity.MetricEntity;
 import com.alibaba.csp.sentinel.dashboard.discovery.AppInfo;
 import com.alibaba.csp.sentinel.dashboard.discovery.MachineDiscovery;
 import com.alibaba.csp.sentinel.dashboard.discovery.MachineInfo;
+import com.alibaba.csp.sentinel.dashboard.redis.service.RedisService;
+import com.alibaba.csp.sentinel.dashboard.redisson.DistributedLocker;
 import com.alibaba.csp.sentinel.dashboard.repository.metric.MetricsRepository;
 import com.alibaba.csp.sentinel.node.metric.MetricNode;
 import com.alibaba.csp.sentinel.util.StringUtil;
@@ -61,6 +63,8 @@ import java.util.concurrent.ThreadPoolExecutor.DiscardPolicy;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 
+import javax.annotation.PostConstruct;
+
 /**
  * Fetch metric of machines.
  *
@@ -78,12 +82,21 @@ public class MetricFetcher {
     private static Logger logger = LoggerFactory.getLogger(MetricFetcher.class);
     private final long intervalSecond = 1;
 
-    private Map<String, AtomicLong> appLastFetchTime = new ConcurrentHashMap<>();
-
     @Autowired
     private MetricsRepository<MetricEntity> metricStore;
+
     @Autowired
     private MachineDiscovery machineDiscovery;
+
+    @Autowired
+    private RedisService redisService;
+
+    @Autowired
+    private DistributedLocker distributedLocker;
+
+    private static final String FETCH_TIME_CACHE = "sentinel:fetch:time:cache:%s";
+
+    private static final String FETCH_LOCK = "sentinel:fetch:lock";
 
     private CloseableHttpAsyncClient httpclient;
 
@@ -121,10 +134,10 @@ public class MetricFetcher {
                 .setDefaultIOReactorConfig(ioConfig)
                 .build();
         httpclient.start();
-        start();
     }
 
-    private void start() {
+    @PostConstruct
+    public void start() {
         fetchScheduleService.scheduleAtFixedRate(() -> {
             try {
                 fetchAllApp();
@@ -150,18 +163,26 @@ public class MetricFetcher {
      * Traverse each APP, and then pull the metric of all machines for that APP.
      */
     private void fetchAllApp() {
-        List<String> apps = machineDiscovery.getAppNames();
-        if (apps == null) {
+        boolean lock = distributedLocker.tryLock(FETCH_LOCK, TimeUnit.SECONDS, 0, 10);
+        if (!lock) {
             return;
         }
-        for (final String app : apps) {
-            fetchService.submit(() -> {
-                try {
-                    doFetchAppMetric(app);
-                } catch (Exception e) {
-                    logger.error("fetchAppMetric error", e);
-                }
-            });
+        try {
+            List<String> apps = machineDiscovery.getAppNames();
+            if (apps == null) {
+                return;
+            }
+            for (final String app : apps) {
+                fetchService.submit(() -> {
+                    try {
+                        doFetchAppMetric(app);
+                    } catch (Exception e) {
+                        logger.error("fetchAppMetric error", e);
+                    }
+                });
+            }
+        } finally {
+            distributedLocker.unlock(FETCH_LOCK);
         }
     }
 
@@ -259,10 +280,13 @@ public class MetricFetcher {
     }
 
     private void doFetchAppMetric(final String app) {
+        String key = String.format(FETCH_TIME_CACHE, app);
         long now = System.currentTimeMillis();
         long lastFetchMs = now - MAX_LAST_FETCH_INTERVAL_MS;
-        if (appLastFetchTime.containsKey(app)) {
-            lastFetchMs = Math.max(lastFetchMs, appLastFetchTime.get(app).get() + 1000);
+
+        Object appLastFetchTime = redisService.getCacheObject(key);
+        if (appLastFetchTime != null) {
+            lastFetchMs = Math.max(lastFetchMs, Long.parseLong(appLastFetchTime.toString()) + 1000);
         }
         // trim milliseconds
         lastFetchMs = lastFetchMs / 1000 * 1000;
@@ -272,7 +296,7 @@ public class MetricFetcher {
             return;
         }
         // update last_fetch in advance.
-        appLastFetchTime.computeIfAbsent(app, a -> new AtomicLong()).set(endTime);
+        redisService.setCacheObject(key, endTime + "");
         final long finalLastFetchMs = lastFetchMs;
         final long finalEndTime = endTime;
         try {

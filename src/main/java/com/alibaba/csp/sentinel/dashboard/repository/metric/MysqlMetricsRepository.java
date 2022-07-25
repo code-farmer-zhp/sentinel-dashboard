@@ -29,6 +29,7 @@ import java.util.Collection;
 import java.util.Comparator;
 import java.util.Date;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * Caches metrics data in a period of time in memory.
@@ -44,8 +45,8 @@ public class MysqlMetricsRepository extends ServiceImpl<MetricsMapper, MetricEnt
         if (metrics == null) {
             return;
         }
-        metrics.stream().sorted(Comparator.comparing(MetricEntity::getTimestamp));
-        this.saveBatch(metrics);
+        List<MetricEntity> collect = metrics.stream().sorted(Comparator.comparing(MetricEntity::getTimestamp)).collect(Collectors.toList());
+        this.saveBatch(collect);
 
     }
 
