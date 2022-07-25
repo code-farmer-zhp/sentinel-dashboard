@@ -173,20 +173,18 @@ public class MetricFetcher {
             throw new IllegalArgumentException("maxWaitSeconds must > 0, but " + maxWaitSeconds);
         }
         AppInfo appInfo = machineDiscovery.getDetailApp(app);
-        // auto remove for app
+        if (appInfo == null) {
+            return;
+        }
         if (appInfo.isDead()) {
-            //logger.info("Dead app removed: {}", app);
-            machineDiscovery.removeApp(app);
+            logger.info("Dead app removed: {}", app);
             return;
         }
         Set<MachineInfo> machines = appInfo.getMachines();
-//        logger.debug("enter fetchOnce(" + app + "), machines.size()=" + machines.size()
-//            + ", time intervalMs [" + startTime + ", " + endTime + "]");
+        logger.debug("enter fetchOnce(" + app + "), machines.size()=" + machines.size()
+                + ", time intervalMs [" + startTime + ", " + endTime + "]");
         if (machines.isEmpty()) {
             return;
-        }
-        if (app.equals("spring-cloud-sentinel-nacos")) {
-            logger.info("============fetch");
         }
         final String msg = "fetch";
         AtomicLong unhealthy = new AtomicLong();
@@ -198,11 +196,9 @@ public class MetricFetcher {
         final Map<String, MetricEntity> metricMap = new ConcurrentHashMap<>(16);
         final CountDownLatch latch = new CountDownLatch(machines.size());
         for (final MachineInfo machine : machines) {
-            // auto remove
             if (machine.isDead()) {
                 latch.countDown();
-                machineDiscovery.getDetailApp(app).removeMachine(machine.getIp(), machine.getPort());
-                //logger.info("Dead machine removed: {}:{} of {}", machine.getIp(), machine.getPort(), app);
+                logger.info("Dead machine  {}:{} of {}", machine.getIp(), machine.getPort(), app);
                 continue;
             }
             if (!machine.isHealthy()) {
@@ -255,17 +251,14 @@ public class MetricFetcher {
         } catch (Exception e) {
             logger.info(msg + " metric, wait http client error:", e);
         }
-        //long cost = System.currentTimeMillis() - start;
-        //logger.info("finished " + msg + " metric for " + app + ", time intervalMs [" + startTime + ", " + endTime
-        //    + "], total machines=" + machines.size() + ", dead=" + dead + ", fetch success="
-        //    + success + ", fetch fail=" + fail + ", time cost=" + cost + " ms");
+        long cost = System.currentTimeMillis() - start;
+        logger.info("finished " + msg + " metric for " + app + ", time intervalMs [" + startTime + ", " + endTime
+                + "], total machines=" + machines.size() + ", fetch success="
+                + success + ", fetch fail=" + fail + ", time cost=" + cost + " ms");
         writeMetric(metricMap);
     }
 
     private void doFetchAppMetric(final String app) {
-        if(!app.equals("spring-cloud-sentinel-nacos")){
-            return;
-        }
         long now = System.currentTimeMillis();
         long lastFetchMs = now - MAX_LAST_FETCH_INTERVAL_MS;
         if (appLastFetchTime.containsKey(app)) {
@@ -274,7 +267,6 @@ public class MetricFetcher {
         // trim milliseconds
         lastFetchMs = lastFetchMs / 1000 * 1000;
         long endTime = lastFetchMs + FETCH_INTERVAL_SECOND * 1000;
-        logger.info("============endTime" + endTime);
         if (endTime > now - 1000 * 2) {
             // too near
             return;
@@ -314,17 +306,17 @@ public class MetricFetcher {
         }
         String body = EntityUtils.toString(response.getEntity(), charset != null ? charset : DEFAULT_CHARSET);
         if (StringUtil.isEmpty(body) || body.startsWith(NO_METRICS)) {
-            //logger.info(machine.getApp() + ":" + machine.getIp() + ":" + machine.getPort() + ", bodyStr is empty");
+            logger.info(machine.getApp() + ":" + machine.getIp() + ":" + machine.getPort() + ", bodyStr is empty");
             return;
         }
         String[] lines = body.split("\n");
-        //logger.info(machine.getApp() + ":" + machine.getIp() + ":" + machine.getPort() +
-        //    ", bodyStr.length()=" + body.length() + ", lines=" + lines.length);
+        logger.info(machine.getApp() + ":" + machine.getIp() + ":" + machine.getPort() +
+                ", bodyStr.length()=" + body.length() + ", lines=" + lines.length);
         handleBody(lines, machine, metricMap);
     }
 
     private void handleBody(String[] lines, MachineInfo machine, Map<String, MetricEntity> map) {
-        //logger.info("handleBody() lines=" + lines.length + ", machine=" + machine);
+        logger.info("handleBody() lines=" + lines.length + ", machine=" + machine);
         if (lines.length < 1) {
             return;
         }

@@ -15,11 +15,12 @@
  */
 package com.alibaba.csp.sentinel.dashboard.domain.vo;
 
+import com.alibaba.csp.sentinel.dashboard.datasource.entity.MetricEntity;
+
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Date;
 import java.util.List;
-
-import com.alibaba.csp.sentinel.dashboard.datasource.entity.MetricEntity;
 
 /**
  * @author leyou
@@ -27,8 +28,8 @@ import com.alibaba.csp.sentinel.dashboard.datasource.entity.MetricEntity;
 public class MetricVo implements Comparable<MetricVo> {
     private Long id;
     private String app;
-    private Long timestamp;
-    private Long gmtCreate = System.currentTimeMillis();
+    private Date timestamp;
+    private Date gmtCreate;
     private String resource;
     private Long passQps;
     private Long blockQps;
@@ -58,7 +59,6 @@ public class MetricVo implements Comparable<MetricVo> {
      *
      * @param entities 通过hashCode查找到的MetricEntities
      * @param identity 真正需要查找的资源名
-     * @return
      */
     public static List<MetricVo> fromMetricEntities(Collection<MetricEntity> entities, String identity) {
         List<MetricVo> list = new ArrayList<>();
@@ -76,8 +76,8 @@ public class MetricVo implements Comparable<MetricVo> {
         MetricVo vo = new MetricVo();
         vo.id = entity.getId();
         vo.app = entity.getApp();
-        vo.timestamp = entity.getTimestamp().getTime();
-        vo.gmtCreate = entity.getGmtCreate().getTime();
+        vo.timestamp = entity.getTimestamp();
+        vo.gmtCreate = entity.getGmtCreate();
         vo.resource = entity.getResource();
         vo.passQps = entity.getPassQps();
         vo.blockQps = entity.getBlockQps();
@@ -89,27 +89,6 @@ public class MetricVo implements Comparable<MetricVo> {
             vo.rt = 0D;
         }
         vo.count = entity.getCount();
-        return vo;
-    }
-
-    public static MetricVo parse(String line) {
-        String[] strs = line.split("\\|");
-        long timestamp = Long.parseLong(strs[0]);
-        String identity = strs[1];
-        long passQps = Long.parseLong(strs[2]);
-        long blockQps = Long.parseLong(strs[3]);
-        long exception = Long.parseLong(strs[4]);
-        double rt = Double.parseDouble(strs[5]);
-        long successQps = Long.parseLong(strs[6]);
-        MetricVo vo = new MetricVo();
-        vo.timestamp = timestamp;
-        vo.resource = identity;
-        vo.passQps = passQps;
-        vo.blockQps = blockQps;
-        vo.successQps = successQps;
-        vo.exceptionQps = exception;
-        vo.rt = rt;
-        vo.count = 1;
         return vo;
     }
 
@@ -129,19 +108,19 @@ public class MetricVo implements Comparable<MetricVo> {
         this.app = app;
     }
 
-    public Long getTimestamp() {
+    public Date getTimestamp() {
         return timestamp;
     }
 
-    public void setTimestamp(Long timestamp) {
+    public void setTimestamp(Date timestamp) {
         this.timestamp = timestamp;
     }
 
-    public Long getGmtCreate() {
+    public Date getGmtCreate() {
         return gmtCreate;
     }
 
-    public void setGmtCreate(Long gmtCreate) {
+    public void setGmtCreate(Date gmtCreate) {
         this.gmtCreate = gmtCreate;
     }
 
@@ -203,6 +182,6 @@ public class MetricVo implements Comparable<MetricVo> {
 
     @Override
     public int compareTo(MetricVo o) {
-        return Long.compare(this.timestamp, o.timestamp);
+        return this.timestamp.compareTo(o.timestamp);
     }
 }

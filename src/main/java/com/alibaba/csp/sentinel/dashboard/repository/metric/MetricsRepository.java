@@ -15,6 +15,7 @@
  */
 package com.alibaba.csp.sentinel.dashboard.repository.metric;
 
+import java.util.Collection;
 import java.util.List;
 
 /**
@@ -26,18 +27,11 @@ import java.util.List;
 public interface MetricsRepository<T> {
 
     /**
-     * Save the metric to the storage repository.
-     *
-     * @param metric metric data to save
-     */
-    void save(T metric);
-
-    /**
      * Save all metrics to the storage repository.
      *
      * @param metrics metrics to save
      */
-    void saveAll(Iterable<T> metrics);
+    void saveAll(Collection<T> metrics);
 
     /**
      * Get all metrics by {@code appName} and {@code resourceName} between a period of time.
